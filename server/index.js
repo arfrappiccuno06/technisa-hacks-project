@@ -4,7 +4,11 @@
 // matches the response contract in ../CLAUDE.md. This lets the UI devs build and test
 // their screens before the real bias logic (PRs 4–6) exists. Do not change the shape of
 // this response without team agreement.
+//
+// PR 4 note: the real Gemini call layer now lives in ./gemini.js (runPrompt). /analyze
+// still returns the mock below so nobody is blocked; PR 6 swaps in the real analyze().
 
+require("dotenv").config({ quiet: true });
 const express = require("express");
 
 const app = express();

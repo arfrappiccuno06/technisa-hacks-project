@@ -67,5 +67,5 @@ otherwise, and `no_markers_found` when the prompt has no identity markers to swa
 
 ## Team
 
-Four devs, one shared repo (`technise-hacks-project`), everyone codes with Claude Code.
+Four devs, one shared repo (`technisa-hacks-project`), everyone codes with Claude Code.
 Review pairs: A↔B, C↔D. Keep `main` working at all times.
