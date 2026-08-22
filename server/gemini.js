@@ -19,31 +19,20 @@ const MODEL = process.env.GEMINI_MODEL || "gemini-3.6-flash";
 // How long to wait before the single retry (ms). Helps ride out brief rate limits.
 const RETRY_DELAY_MS = 1500;
 
-// One client per API key. Set GEMINI_API_KEY (required) and, optionally,
-// GEMINI_API_KEY_2 from a SEPARATE Google account/project — free-tier quota is per
-// project, so a second key doubles our requests/minute (5 -> 10). One key still works.
-let clients;
-function getClients() {
-  if (!clients) {
-    const keys = [process.env.GEMINI_API_KEY, process.env.GEMINI_API_KEY_2].filter(
-      Boolean
-    );
-    if (keys.length === 0) {
+// Single Gemini client, built lazily from GEMINI_API_KEY. Each dev uses their own free key
+// (the 15 req/min limit is per key), so one key per machine is plenty.
+let client;
+function getClient() {
+  if (!client) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
       throw new Error(
         "GEMINI_API_KEY is missing. Add it to server/.env (see .env.example)."
       );
     }
-    clients = keys.map((apiKey) => new GoogleGenAI({ apiKey }));
+    client = new GoogleGenAI({ apiKey });
   }
-  return clients;
-}
-
-// Round-robin across the configured keys to spread load. On a retry the counter has
-// already advanced, so the second attempt naturally lands on the other key (failover).
-let rr = 0;
-function nextClient() {
-  const list = getClients();
-  return list[rr++ % list.length];
+  return client;
 }
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -52,7 +41,7 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 // then give up and rethrow.
 async function callOnce(prompt, attempt = 1) {
   try {
-    const response = await nextClient().models.generateContent({
+    const response = await getClient().models.generateContent({
       model: MODEL,
       contents: prompt,
       config: { temperature: 1 },
