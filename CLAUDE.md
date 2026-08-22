@@ -27,8 +27,10 @@ output.
 
 - The **extension runs on `https://gemini.google.com/*`** and calls the backend at
   **`http://localhost:3000/analyze`**.
-- The **backend uses the latest Gemini Flash model**, so we audit the *same model the user
-  is actually chatting with*.
+- The **backend uses `gemini-3.6-flash`**, so we audit the same Gemini Flash family the user
+  is chatting with. We deliberately avoid the newest alias (`gemini-flash-latest` → 3.7-flash):
+  its free tier is only ~20 requests/day, while 3.6-flash allows ~1,500/day at 15/min.
+  Override with `GEMINI_MODEL` in `server/.env`.
 - A second endpoint, **`POST /report`**, drafts a formal bias report from an analysis
   (arrives in a later PR), powering the "submit to Google" feature.
 
@@ -37,9 +39,11 @@ output.
 - **Extension:** plain HTML / CSS / JavaScript. Manifest V3. No frameworks, no build step.
 - **Server:** Node.js + Express, running on port 3000 (`npm start`).
 - **AI calls:** the official [`@google/genai`](https://www.npmjs.com/package/@google/genai)
-  npm package, latest Gemini Flash model. The free API key from
-  [aistudio.google.com](https://aistudio.google.com) lives in **`/server/.env` only** and
-  is **never committed** (see `.gitignore`; template in `.env.example`).
+  npm package, model **`gemini-3.6-flash`** (see Architecture for why not the newest alias).
+  The free API key from [aistudio.google.com](https://aistudio.google.com) lives in
+  **`/server/.env` only** and is **never committed** (see `.gitignore`; template in
+  `.env.example`). **Each dev should use their own free key** — the 15 req/min limit is *per
+  key*, so a shared key causes collisions once analyses start firing (10 calls each).
 
 ## THE RESPONSE CONTRACT — do not change without team agreement
 

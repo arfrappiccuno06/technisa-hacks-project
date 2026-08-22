@@ -4,8 +4,8 @@
 // prompt k times in parallel and returns the k answers. PR 6's bias engine reuses this to
 // get 5 answers for the original prompt and 5 for the counterfactual.
 //
-// We use the latest Gemini Flash model on purpose: it's the same model family the user is
-// chatting with on gemini.google.com, so we audit what they actually experience.
+// We use a Gemini Flash model (see MODEL below) — the same family the user chats with on
+// gemini.google.com — so we audit what they actually experience.
 
 require("dotenv").config({ quiet: true });
 const { GoogleGenAI } = require("@google/genai");
