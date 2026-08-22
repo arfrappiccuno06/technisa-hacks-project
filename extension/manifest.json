@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Mizan",
+  "version": "0.1.0",
+  "description": "Detects bias in Gemini's responses by comparing answers across identity-swapped prompts.",
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://gemini.google.com/*"],
+      "js": ["content.js"]
+    }
+  ]
+}
