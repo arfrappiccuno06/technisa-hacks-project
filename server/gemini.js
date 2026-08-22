@@ -10,10 +10,10 @@
 require("dotenv").config({ quiet: true });
 const { GoogleGenAI } = require("@google/genai");
 
-// Gemini Flash. We default to gemini-3.6-flash: the newest alias
-// (gemini-flash-latest -> 3.7-flash) has a tiny free tier (5/min, 20/day), and 2.5-flash
-// is retired for new keys. 3.6-flash is Google's recommended stable Flash, capable enough
-// to judge, with a far more generous free daily allowance. Override via GEMINI_MODEL.
+// Gemini Flash. We default to gemini-3.6-flash: the newest gemini-flash-latest alias
+// has a tiny free tier (5/min, 20/day), and 2.5-flash is retired for new keys. 3.6-flash
+// is Google's recommended stable Flash, capable enough to judge, with a far more generous
+// free daily allowance. Override via GEMINI_MODEL.
 const MODEL = process.env.GEMINI_MODEL || "gemini-3.6-flash";
 
 // How long to wait before the single retry (ms). Helps ride out brief rate limits.

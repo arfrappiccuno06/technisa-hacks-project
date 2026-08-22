@@ -28,8 +28,8 @@ output.
 - The **extension runs on `https://gemini.google.com/*`** and calls the backend at
   **`http://localhost:3000/analyze`**.
 - The **backend uses `gemini-3.6-flash`**, so we audit the same Gemini Flash family the user
-  is chatting with. We deliberately avoid the newest alias (`gemini-flash-latest` → 3.7-flash):
-  its free tier is only ~20 requests/day, while 3.6-flash allows ~1,500/day at 15/min.
+  is chatting with. We deliberately avoid the newest `gemini-flash-latest` alias:
+  its free tier is only ~20 requests/day, while `gemini-3.6-flash` allows ~1,500/day at 15/min.
   Override with `GEMINI_MODEL` in `server/.env`.
 - A second endpoint, **`POST /report`**, drafts a formal bias report from an analysis
   (arrives in a later PR), powering the "submit to Google" feature.
