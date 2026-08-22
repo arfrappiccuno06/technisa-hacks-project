@@ -1,15 +1,7 @@
 // Mizan bias engine — identity marker detection and counterfactual generation.
 // See ../CLAUDE.md for the pipeline this feeds into.
 
-require("dotenv").config();
-const { GoogleGenAI } = require("@google/genai");
-
-// Configurable via GEMINI_MODEL in .env — pinned there to gemini-3.5-flash-lite
-// instead of a "latest" alias, since free-tier request quotas vary per model/key
-// and need to be checked in AI Studio rather than assumed.
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
-
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const { runPrompt } = require("./gemini");
 
 // --- Keyword lists -----------------------------------------------------
 
@@ -106,12 +98,9 @@ Prompt:
 ${prompt}
 """`;
 
-  const response = await ai.models.generateContent({
-    model: GEMINI_MODEL,
-    contents: instruction,
-  });
+  const [answer] = await runPrompt(instruction, 1);
 
-  const text = response.text.trim();
+  const text = answer.trim();
   const jsonText = text.replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
 
   try {
@@ -155,12 +144,9 @@ Prompt:
 ${prompt}
 """`;
 
-  const response = await ai.models.generateContent({
-    model: GEMINI_MODEL,
-    contents: instruction,
-  });
+  const [answer] = await runPrompt(instruction, 1);
 
-  return response.text.trim();
+  return answer.trim();
 }
 
 module.exports = { detectMarkers, makeCounterfactual };
