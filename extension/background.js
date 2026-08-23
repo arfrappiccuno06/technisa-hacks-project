@@ -2,18 +2,24 @@
 console.log("Mizan background service worker loaded");
 
 const ANALYZE_URL = "http://localhost:3000/analyze";
+const REPORT_URL = "http://localhost:3000/report";
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (!message || message.type !== "MIZAN_ANALYZE") {
+  if (!message || (message.type !== "MIZAN_ANALYZE" && message.type !== "MIZAN_REPORT")) {
     return undefined;
   }
 
   (async () => {
     try {
-      const res = await fetch(ANALYZE_URL, {
+      const isReport = message.type === "MIZAN_REPORT";
+      const res = await fetch(isReport ? REPORT_URL : ANALYZE_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: message.prompt, platform: "gemini" }),
+        body: JSON.stringify(
+          isReport
+            ? message.analysis
+            : { prompt: message.prompt, platform: "gemini" }
+        ),
       });
 
       if (!res.ok) {
