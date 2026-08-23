@@ -46,16 +46,19 @@
 
   function analyzePrompt(prompt) {
     console.log("Mizan analyzing prompt:", prompt);
+    window.MizanPanel.showLoading();
     chrome.runtime.sendMessage({ type: "MIZAN_ANALYZE", prompt }, (response) => {
       if (chrome.runtime.lastError) {
         console.error("Mizan: could not reach background worker —", chrome.runtime.lastError.message);
+        window.MizanPanel.close();
         return;
       }
       if (!response || !response.ok) {
         console.error("Mizan: analyze request failed —", response && response.error);
+        window.MizanPanel.close();
         return;
       }
-      console.log("Mizan analysis result:", response.data);
+      window.MizanPanel.renderResults(response.data, { originalPrompt: prompt });
     });
   }
 
@@ -153,7 +156,7 @@
     console.log("Mizan clicked");
     const prompt = findLastUserMessage();
     if (prompt) {
-      analyzePrompt(prompt);
+      window.MizanPanel.showTeaser({ onRun: () => analyzePrompt(prompt) });
     } else {
       console.warn("Mizan: no user message found on the page, showing fallback input");
       showFallbackBox();
