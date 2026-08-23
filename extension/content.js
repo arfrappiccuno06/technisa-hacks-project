@@ -116,6 +116,7 @@
     });
     closeButton.addEventListener("click", () => {
       box.style.display = "none";
+      button.style.display = ""; // closing the paste box brings the button back
     });
 
     header.appendChild(label);
@@ -189,9 +190,19 @@
   });
   button.appendChild(logo);
 
+  // Hide the floating button while the Mizan panel is open, and bring it back when the
+  // panel closes. Its X, Dismiss, and the error paths all route through MizanPanel.close,
+  // so wrapping close() covers every way the panel can go away.
+  const originalPanelClose = window.MizanPanel.close;
+  window.MizanPanel.close = function () {
+    originalPanelClose.apply(this, arguments);
+    button.style.display = "";
+  };
+
   button.addEventListener("click", () => {
     console.log("Mizan clicked");
     const prompt = findLastUserMessage();
+    button.style.display = "none"; // the panel/box takes over the corner
     if (prompt) {
       window.MizanPanel.showTeaser({ onRun: () => analyzePrompt(prompt) });
     } else {
