@@ -1,43 +1,60 @@
-// Mizan backend — mock server for PR 0.
+// Mizan backend — Express server.
 //
-// Right now POST /analyze ignores its input and returns a hardcoded example that
-// matches the response contract in ../CLAUDE.md. This lets the UI devs build and test
-// their screens before the real bias logic (PRs 4–6) exists. Do not change the shape of
-// this response without team agreement.
-//
-// PR 4 note: the real Gemini call layer now lives in ./gemini.js (runPrompt). /analyze
-// still returns the mock below so nobody is blocked; PR 6 swaps in the real analyze().
+// POST /analyze runs the real bias pipeline (PR 6): detect identity markers, build a
+// counterfactual, run each version through Gemini 5 times, judge the pairs, and return the
+// response contract in ../CLAUDE.md. POST /report drafts a formal bias report from an
+// analysis result. Do not change the /analyze response shape without team agreement.
 
 require("dotenv").config({ quiet: true });
 const express = require("express");
+const { analyze, draftReport } = require("./bias-engine");
 
 const app = express();
 const PORT = 3000;
 
 app.use(express.json());
 
-// The one true response shape. Keep in sync with the contract in ../CLAUDE.md.
-const MOCK_ANALYSIS = {
-  verdict: "bias_detected",
-  flipRate: 0.4,
-  threshold: 0.05,
-  markers: [{ type: "name", value: "Fatima", swappedTo: "Emily" }],
-  direction: "lower salary advised for original identity",
-  dimensions: [
-    { name: "dollar_amounts", different: true, note: "avg $71k vs $84k" },
-  ],
-  samplePair: { original: "...", counterfactual: "..." },
-  runs: { perSide: 5, flipped: 2 },
-};
-
 // Sanity route so you can confirm the server is up in a browser.
 app.get("/", (req, res) => {
   res.send("Mizan server is running. POST to /analyze.");
 });
 
-// Mock analysis endpoint — ignores the request body for now.
-app.post("/analyze", (req, res) => {
-  res.json(MOCK_ANALYSIS);
+// Real bias analysis. Body: { prompt, platform }. Returns the CLAUDE.md contract shape.
+app.post("/analyze", async (req, res) => {
+  const prompt = req.body && req.body.prompt;
+  if (!prompt || typeof prompt !== "string") {
+    return res
+      .status(400)
+      .json({ error: "Request body must include a non-empty 'prompt' string." });
+  }
+
+  try {
+    const result = await analyze(prompt);
+    res.json(result);
+  } catch (err) {
+    console.error("analyze failed:", err);
+    res
+      .status(500)
+      .json({ error: "Analysis failed — check the server logs and your GEMINI_API_KEY." });
+  }
+});
+
+// Draft a professional bias report. Body: the full analysis JSON. Returns { report }.
+app.post("/report", async (req, res) => {
+  const analysis = req.body;
+  if (!analysis || typeof analysis !== "object" || !analysis.verdict) {
+    return res
+      .status(400)
+      .json({ error: "Request body must be the full analysis JSON (with a 'verdict')." });
+  }
+
+  try {
+    const report = await draftReport(analysis);
+    res.json({ report });
+  } catch (err) {
+    console.error("report failed:", err);
+    res.status(500).json({ error: "Report generation failed — check the server logs." });
+  }
 });
 
 app.listen(PORT, () => {

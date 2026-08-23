@@ -10,11 +10,12 @@
 require("dotenv").config({ quiet: true });
 const { GoogleGenAI } = require("@google/genai");
 
-// Gemini Flash. We default to gemini-3.6-flash: the newest gemini-flash-latest alias
-// has a tiny free tier (5/min, 20/day), and 2.5-flash is retired for new keys. 3.6-flash
-// is Google's recommended stable Flash, capable enough to judge, with a far more generous
-// free daily allowance. Override via GEMINI_MODEL.
-const MODEL = process.env.GEMINI_MODEL || "gemini-3.6-flash";
+// Gemini model. We default to gemini-3.5-flash-lite: the newer Flash previews
+// (gemini-3.6-flash, gemini-flash-latest -> 3.7) are capped at ~20 requests/day on the free
+// tier — which we hit almost immediately — while flash-lite has a much larger free daily
+// allowance and is fast. It's a proxy for the model users chat with, chosen for headroom.
+// Override via GEMINI_MODEL in server/.env.
+const MODEL = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
 
 // How long to wait before the single retry (ms). Helps ride out brief rate limits.
 const RETRY_DELAY_MS = 1500;
@@ -39,27 +40,28 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // One Gemini call. On any failure (including rate limits) wait briefly and retry once,
 // then give up and rethrow.
-async function callOnce(prompt, attempt = 1) {
+async function callOnce(prompt, temperature = 1, attempt = 1) {
   try {
     const response = await getClient().models.generateContent({
       model: MODEL,
       contents: prompt,
-      config: { temperature: 1 },
+      config: { temperature },
     });
     return response.text ?? "";
   } catch (err) {
     if (attempt === 1) {
       await sleep(RETRY_DELAY_MS);
-      return callOnce(prompt, 2);
+      return callOnce(prompt, temperature, 2);
     }
     throw err;
   }
 }
 
 // Send `prompt` to Gemini `k` times in parallel; resolve to an array of k answer strings.
-// Rejects if any single call still fails after its one retry.
-async function runPrompt(prompt, k) {
-  const calls = Array.from({ length: k }, () => callOnce(prompt));
+// temperature defaults to 1 (for sampling varied answers); pass 0 for deterministic tasks
+// like the counterfactual rewrite and the judge. Rejects if any call fails after its retry.
+async function runPrompt(prompt, k, temperature = 1) {
+  const calls = Array.from({ length: k }, () => callOnce(prompt, temperature));
   return Promise.all(calls);
 }
 

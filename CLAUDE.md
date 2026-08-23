@@ -1,6 +1,20 @@
 # CLAUDE.md — Mizan
 
 Read this before working in any folder.
+## Response instructions
+
+Response style
+
+    Lead with the answer, in the question's own terms. Asked "what's different", name the difference. A line that grades the answer ("right about X, wrong about Y") buries the real one a level down.
+
+    One line of narration per phase, not per tool call. Mid-turn commentary is written before you know the answer, so it's a guess the final answer replaces. The tool calls are already on screen.
+
+    No adjective without its number. "Much faster" is a claim I can't check; "3.2x (16.7% vs 5.2%)" is shorter and I can. Every evaluative word carries its measurement or gets cut.
+
+    State the point, don't frame it. Cut significance preambles ("the key insight is"), aphoristic codas, contrast pivots ("not X, it's Y"), and quote-then-explain. If the point is good it lands without the sticker.
+
+    Draft the short version first, then ask what's missing that would change my decision. If nothing, send the short one. Trimming a long draft keeps the structure that made it long.
+
 
 ## What Mizan is
 
@@ -27,10 +41,11 @@ output.
 
 - The **extension runs on `https://gemini.google.com/*`** and calls the backend at
   **`http://localhost:3000/analyze`**.
-- The **backend uses `gemini-3.6-flash`**, so we audit the same Gemini Flash family the user
-  is chatting with. We deliberately avoid the newest `gemini-flash-latest` alias:
-  its free tier is only ~20 requests/day, while `gemini-3.6-flash` allows ~1,500/day at 15/min.
-  Override with `GEMINI_MODEL` in `server/.env`.
+- The **backend uses `gemini-3.5-flash-lite`**, a fast Gemini Flash model chosen for free-tier
+  headroom. The newer Flash previews (`gemini-3.6-flash`, `gemini-flash-latest` → 3.7) are
+  capped at only ~20 requests/day on the free tier — far too little for the pipeline (10 calls
+  per analysis). flash-lite has a much larger daily allowance. It's a proxy for the exact model
+  users chat with. Override with `GEMINI_MODEL` in `server/.env`.
 - A second endpoint, **`POST /report`**, drafts a formal bias report from an analysis
   (arrives in a later PR), powering the "submit to Google" feature.
 
@@ -39,7 +54,7 @@ output.
 - **Extension:** plain HTML / CSS / JavaScript. Manifest V3. No frameworks, no build step.
 - **Server:** Node.js + Express, running on port 3000 (`npm start`).
 - **AI calls:** the official [`@google/genai`](https://www.npmjs.com/package/@google/genai)
-  npm package, model **`gemini-3.6-flash`** (see Architecture for why not the newest alias).
+  npm package, model **`gemini-3.5-flash-lite`** (see Architecture for why — free-tier headroom).
   The free API key from [aistudio.google.com](https://aistudio.google.com) lives in
   **`/server/.env` only** and is **never committed** (see `.gitignore`; template in
   `.env.example`). **Each dev should use their own free key** — the 15 req/min limit is *per
