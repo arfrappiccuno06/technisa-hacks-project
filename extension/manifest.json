@@ -15,7 +15,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["panel.css"],
+      "resources": ["panel.css", "assets/mizan-logo.png"],
       "matches": ["https://gemini.google.com/*"]
     }
   ]

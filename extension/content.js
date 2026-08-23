@@ -88,10 +88,38 @@
       fontFamily: "Arial, sans-serif",
     });
 
+    const header = document.createElement("div");
+    Object.assign(header.style, {
+      display: "flex",
+      alignItems: "flex-start",
+      justifyContent: "space-between",
+      gap: "8px",
+    });
+
     const label = document.createElement("div");
     label.textContent = "Couldn't find your message — paste it here:";
     label.style.fontSize = "12px";
     label.style.color = "#374151";
+
+    const closeButton = document.createElement("button");
+    closeButton.textContent = "✕";
+    closeButton.setAttribute("aria-label", "Close");
+    Object.assign(closeButton.style, {
+      border: "none",
+      background: "transparent",
+      color: "#6b7280",
+      fontSize: "14px",
+      lineHeight: "1",
+      padding: "0 2px",
+      cursor: "pointer",
+      flexShrink: "0",
+    });
+    closeButton.addEventListener("click", () => {
+      box.style.display = "none";
+    });
+
+    header.appendChild(label);
+    header.appendChild(closeButton);
 
     const textarea = document.createElement("textarea");
     textarea.rows = 4;
@@ -123,7 +151,7 @@
       box.style.display = "none";
     });
 
-    box.appendChild(label);
+    box.appendChild(header);
     box.appendChild(textarea);
     box.appendChild(analyzeButton);
     document.body.appendChild(box);
@@ -131,7 +159,6 @@
 
   const button = document.createElement("button");
   button.id = BUTTON_ID;
-  button.textContent = "M";
   button.setAttribute("aria-label", "Mizan bias check");
 
   Object.assign(button.style, {
@@ -142,15 +169,25 @@
     height: "48px",
     borderRadius: "50%",
     border: "none",
-    background: "#4f46e5",
-    color: "#ffffff",
-    fontSize: "18px",
-    fontWeight: "bold",
-    fontFamily: "Arial, sans-serif",
+    padding: "0",
+    background: "#ffffff",
     cursor: "pointer",
     boxShadow: "0 2px 8px rgba(0, 0, 0, 0.3)",
     zIndex: "2147483647",
+    overflow: "hidden",
   });
+
+  const logo = document.createElement("img");
+  logo.src = chrome.runtime.getURL("assets/mizan-logo.png");
+  logo.alt = "Mizan";
+  Object.assign(logo.style, {
+    width: "100%",
+    height: "100%",
+    objectFit: "contain",
+    display: "block",
+    pointerEvents: "none",
+  });
+  button.appendChild(logo);
 
   button.addEventListener("click", () => {
     console.log("Mizan clicked");
