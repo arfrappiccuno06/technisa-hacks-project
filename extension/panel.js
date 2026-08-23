@@ -135,24 +135,21 @@ function panelMarkup() {
   return `
     <div class="mizan-root">
       <div class="mizan-widget" role="dialog" aria-label="Mizan bias check">
-        <button type="button" class="mizan-dismiss" data-mizan="close" aria-label="Close">×</button>
         <div class="mizan-teaser mizan-hidden" data-mizan="teaser">
           <div class="mizan-teaser-top">
-            <div class="mizan-teaser-flag" aria-hidden="true">
-              <svg viewBox="0 0 24 24" width="16" height="16" focusable="false"><path fill="currentColor" d="M14.4 6L14 4H5v17h2v-7h6.6l.4 2h7V6z"/></svg>
-            </div>
-            <div class="mizan-teaser-text">
-              <h2>Potential bias detected</h2>
+            <div class="mizan-teaser-alert">
+              <svg viewBox="0 0 24 24" width="15" height="15" focusable="false" aria-hidden="true"><path fill="currentColor" d="M14.4 6L14 4H5v17h2v-7h6.6l.4 2h7V6z"/></svg>
+              <h2>Potential Bias Detected</h2>
             </div>
           </div>
           <hr class="mizan-divider">
-          <div class="mizan-toggle-row">
-          </div>
-          <button type="button" class="mizan-btn mizan-btn-primary" data-mizan="run-check"> Run Bias Checker</button>
+          <button type="button" class="mizan-btn mizan-btn-accent" data-mizan="run-check">View Report</button>
         </div>
         <div class="mizan-loading mizan-hidden" data-mizan="loading">
-          <div class="mizan-spinner" aria-hidden="true"></div>
-          <div>Comparing original and swapped prompts…</div>
+          <div class="mizan-loading-body">
+            <div class="mizan-spinner" aria-hidden="true"></div>
+            <div>Comparing original and swapped prompts…</div>
+          </div>
         </div>
         <div class="mizan-results mizan-hidden" data-mizan="results"></div>
       </div>
@@ -161,8 +158,6 @@ function panelMarkup() {
 }
 
 function bind(root) {
-  root.querySelector("[data-mizan=close]").addEventListener("click", close);
-
   const autoRun = root.querySelector("[data-mizan=auto-run]");
   if (autoRun) {
     autoRun.addEventListener("click", () => {
@@ -234,7 +229,6 @@ function resultsHtml(analysis, originalPrompt) {
   const verdict = analysis.verdict || "no_meaningful_difference";
   const isBias = verdict === "bias_detected";
   const flipPct = Math.round((Number(analysis.flipRate) || 0) * 100);
-  const runs = analysis.runs || { perSide: 5, flipped: 0 };
   const markers = Array.isArray(analysis.markers) ? analysis.markers : [];
   const counterfactualPrompt = originalPrompt ? buildCounterfactual(originalPrompt, markers) : "";
 
@@ -243,11 +237,12 @@ function resultsHtml(analysis, originalPrompt) {
       <div class="mizan-header-left">
         <h2>Analysis Complete</h2>
       </div>
-    </div>
-
-    <div class="mizan-banner ${isBias ? "bias" : "ok"}">
-      <div class="mizan-banner-title">${escapeHtml(bannerLabel(verdict))}</div>
-      <div class="mizan-banner-rate">${flipPct}% flip rate</div>
+      <div class="mizan-header-right">
+        <div class="mizan-badge ${isBias ? "bias" : "ok"}">
+          ${isBias ? flagIconSvg() : ""}<span>${escapeHtml(bannerLabel(verdict))}</span>
+        </div>
+        <span class="mizan-flip-rate">${flipPct}% flip rate</span>
+      </div>
     </div>
 
     ${
@@ -255,21 +250,24 @@ function resultsHtml(analysis, originalPrompt) {
         ? `<h3 class="mizan-section-title">Identity Swap Test</h3>
            <div class="mizan-swap-grid">
              <div class="mizan-swap-col">
-               <div class="mizan-swap-head"><span aria-hidden="true">👤</span> Original Prompt</div>
+               <div class="mizan-swap-head">Original Prompt <span aria-hidden="true">${personIconSvg()}</span></div>
                <div class="mizan-swap-body">${highlight(originalPrompt, markers, "value", "mizan-hl-original")}</div>
              </div>
              <div class="mizan-swap-col is-swapped">
-               <div class="mizan-swap-head"><span aria-hidden="true">⇄</span> Swapped Identity</div>
+               <div class="mizan-swap-head">Swapped Identity <span aria-hidden="true">${swapIconSvg()}</span></div>
                <div class="mizan-swap-body">${highlight(counterfactualPrompt, markers, "swappedTo", "mizan-hl-swapped")}</div>
              </div>
            </div>`
         : `<p class="mizan-direction">No identity markers were found in this prompt to compare.</p>`
     }
 
-    <details class="mizan-observation">
-      <summary>Observation</summary>
-      <div class="mizan-observation-body">${escapeHtml(observationFor(analysis, verdict))}</div>
-    </details>
+    <div class="mizan-observation">
+      <span class="mizan-observation-icon" aria-hidden="true">${bulbIconSvg()}</span>
+      <div class="mizan-observation-text">
+        <h4>Observation</h4>
+        <p>${escapeHtml(observationFor(analysis, verdict))}</p>
+      </div>
+    </div>
 
     <div class="mizan-actions">
       <button type="button" class="mizan-btn mizan-btn-ghost" data-mizan="dismiss">Dismiss</button>
@@ -278,8 +276,24 @@ function resultsHtml(analysis, originalPrompt) {
   `;
 }
 
+function flagIconSvg() {
+  return `<svg viewBox="0 0 24 24" width="11" height="11" focusable="false" aria-hidden="true"><path fill="currentColor" d="M14.4 6L14 4H5v17h2v-7h6.6l.4 2h7V6z"/></svg>`;
+}
+
+function personIconSvg() {
+  return `<svg viewBox="0 0 24 24" width="11" height="11" focusable="false"><path fill="currentColor" d="M12 12c2.7 0 4.9-2.2 4.9-4.9S14.7 2.2 12 2.2 7.1 4.4 7.1 7.1 9.3 12 12 12zm0 2.4c-3.3 0-9.8 1.6-9.8 4.9v2.5h19.6v-2.5c0-3.3-6.5-4.9-9.8-4.9z"/></svg>`;
+}
+
+function swapIconSvg() {
+  return `<svg viewBox="0 0 24 24" width="11" height="11" focusable="false"><path fill="currentColor" d="M7 7h11l-3-3 1.4-1.4L21.8 8 16.4 13.4 15 12l3-3H7V7zm10 10H6l3 3-1.4 1.4L2.2 16 7.6 10.6 9 12l-3 3h11v2z"/></svg>`;
+}
+
+function bulbIconSvg() {
+  return `<svg viewBox="0 0 24 24" width="16" height="16" focusable="false"><path fill="currentColor" d="M9 21h6v-1H9v1zm3-19a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg>`;
+}
+
 function bannerLabel(verdict) {
-  if (verdict === "bias_detected") return "Bias detected";
+  if (verdict === "bias_detected") return "Potential Bias Detected";
   if (verdict === "no_markers_found") return "No identity markers found";
   return "No meaningful difference";
 }
