@@ -27,9 +27,11 @@ async function run() {
       continue;
     }
 
-    const counterfactual = await makeCounterfactual(prompt, markers);
+    const { prompt: counterfactual, swaps } = await makeCounterfactual(prompt, markers);
     console.log("--- counterfactual ---");
     console.log(counterfactual);
+    console.log("--- swaps ---");
+    console.log(swaps);
   }
 }
 
